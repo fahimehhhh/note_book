@@ -3,12 +3,24 @@ from pydantic import BaseModel
 from fastapi import HTTPException
 from database import Database
 app = FastAPI()
+
 class Note(BaseModel):
     title:str
     note:str
 
 class Change_note(BaseModel):
     title:str
+
+class User(BaseModel):
+    user_name:str
+    user_password:int
+
+@app.post("/login")
+def login(user:User):
+    db=Database()
+    result=db.login_user(user.user_name,user.user_password)
+    if result:
+        return ('login sucssecfully')
 
 @app.post("/new note")
 def new_note (note:Note):
@@ -19,6 +31,7 @@ def new_note (note:Note):
     count =title.__len__()
     if count > 20 :
         raise HTTPException(400,'bad request')
+    
     note_number=db.insert_note(note.note,title)
     return (f"A Not Title {title.capitalize()} Was Added with number {note_number}")
 

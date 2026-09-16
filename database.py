@@ -6,10 +6,17 @@ class Database():
         self.cursor = self.connection.cursor()
         self.create_table()
     def create_table(self):
+        self.cursor.execute('''CREATE TABLE IF NOT EXISTS users 
+        (user_names TEXT UNIQUE NOT NULL,password_users TEXT NOT NULL ,user_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  )''')
+         
         self.cursor.execute('''CREATE TABLE IF NOT EXISTS note
-        (note_number INTEGER PRIMARY KEY AUTOINCREMENT,notes TEXT NOT NULL ,title_note TEXT NUT NULL ,create_at NUT NULL )''')
+        (note_number INTEGER PRIMARY KEY AUTOINCREMENT,notes TEXT NOT NULL ,title_note TEXT NOT NULL ,create_at NOT NULL ,user_number INTEGER ,FOREIGN KEY(user_number)  REFERENCES users(user_number))''')
 
-    
+    def login_user(self,user_names,password_users):
+        self.cursor.execute('''INSERT INTO users (user_names,password_users) VALUES(?,?)''',(user_names,password_users))
+        return True
+
+   
     def insert_note(self,notes,title_note):
         self.cursor.execute('''INSERT INTO note (notes,title_note,create_at)  VALUES(?,?,0)''',(notes,title_note))
         self.connection.commit()
