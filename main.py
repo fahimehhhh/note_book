@@ -15,12 +15,24 @@ class User(BaseModel):
     user_name:str
     user_password:int
 
-@app.post("/login")
-def login(user:User):
+
+
+@app.post("/register")
+def register(user:User):
+    
     db=Database()
-    result=db.login_user(user.user_name,user.user_password)
-    if result:
-        return ('login sucssecfully')
+    user_name = user.user_name.strip()
+    if user_name =='':
+        raise(HTTPException(422,'unprocessable content'))
+
+    elif user_name.__len__() >20:
+        raise(HTTPException(422,'unprocessable content'))
+
+    if  db.check_username(user_name) == []:
+        db.register(user.user_name,user.user_password)
+        return ('user retisted')
+    else:
+        raise(HTTPException(409,'conflict'))
 
 @app.post("/new note")
 def new_note (note:Note):
