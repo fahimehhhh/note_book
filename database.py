@@ -8,50 +8,74 @@ class Database():
         with sqlite3.connect("database.db") as connection:
             cursor=connection.cursor()
             cursor.execute('''CREATE TABLE IF NOT EXISTS users 
-            (user_names TEXT UNIQUE NOT NULL,password_users TEXT NOT NULL ,user_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL  )''')
+            (user_names TEXT UNIQUE NOT NULL,password_users TEXT NOT NULL ,user_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, token_users TEXT UNIQUE NOT NULL)''')
          
             cursor.execute('''CREATE TABLE IF NOT EXISTS note
             (note_number INTEGER PRIMARY KEY AUTOINCREMENT,notes TEXT NOT NULL ,title_note TEXT NOT NULL ,create_at NOT NULL ,user_number INTEGER ,FOREIGN KEY(user_number)  REFERENCES users(user_number))''')
+
+
+    def get_user_number(self,token_user):
+        with sqlite3.connect('database.db') as connection:
+            cursor=connection.cursor()
+            cursor.execute('''SELECT user_number FROM users WHERE token_users=?''',(token_user,))
+            return cursor.fetchone()
+
+
 
     def register(self,user_names,password_users):
         with sqlite3.connect("database.db") as connection:
             cursor =connection.cursor()
             cursor.execute('''INSERT INTO users (user_names,password_users) VALUES(?,?)''',(user_names,password_users))
-            return True
-
-    def check_username (self,user_names):
-        with sqlite3.connect('database.db') as connection:
-            cursor = connection.cursor()
-            cursor.execute('''SELECT user_names FROM users WHERE user_names=?''',(user_names,))
-            return cursor.fetchall()
-
-    
-    def insert_note(self,notes,title_note):
-        with sqlite3.connect("database.db") as connection:
-            cursor=connection.cursor()
-            cursor.execute('''INSERT INTO note (notes,title_note,create_at)  VALUES(?,?,0)''',(notes,title_note))
             return cursor.lastrowid
 
-    def delete_note(self,note_number):
+    def login(self,token_user ,user_names):
         with sqlite3.connect("database.db") as connection:
             cursor =connection.cursor()
-            cursor.execute('''DELETE FROM note WHERE note_number=?''',(note_number,))
-            return True
+            cursor.execute('''UPDATE  users SET token_users=?  WHERE user_names=?''',(token_user,user_names))
+            cursor.execute('''SELECT token_users FROM users WHERE user_names=?''',(user_names,))
+            return cursor.fetchone()
 
-    def get_notes(self):
+
+
+    def check_username(self,user_name,password_user):
         with sqlite3.connect("database.db") as connection:
-            cursor = connection.cursor()
-            cursor.execute('''SELECT title_note FROM note ''')
+            cursor=connection.cursor()
+            cursor.execute('''SELECT user_names,password_users FROM users WHERE (user_names,password_users)=(?,?)''',(user_name,password_user))
+            return cursor.fetchone()
+
+    def get_users(self):
+        with sqlite3.connect("database.db") as connection:
+            cursor=connection.cursor()
+            cursor.execute('''SELECT user_names,password_users FROM users''')
             return cursor.fetchall()
 
-    def change_note(self,title_note,note_number):
+    def insert_note(self,notes,title_note,user_number):
+        with sqlite3.connect("database.db") as connection:
+            cursor=connection.cursor()
+            cursor.execute('''INSERT INTO note (notes,title_note,user_number,create_at)  VALUES(?,?,?,0)''',(notes,title_note,user_number))
+            return cursor.lastrowid
+
+    def delete_note(self,note_number,user_number):
+        with sqlite3.connect("database.db") as connection:
+            cursor =connection.cursor()
+            cursor.execute('''DELETE FROM note WHERE note_number=? AND user_number=?''',(note_number,user_number))
+            return cursor.rowcount
+
+    def get_notes(self,user_number):
         with sqlite3.connect("database.db") as connection:
             cursor = connection.cursor()
-            cursor.execute('''UPDATE note SET title_note=? WHERE note_number=?''',(title_note,note_number))
+            cursor.execute('''SELECT title_note FROM note WHERE user_number=? ''',(user_number,))
+            return cursor.fetchall()
+
+    def change_note(self,title_note,note_number,user_number):
+        with sqlite3.connect("database.db") as connection:
+            cursor = connection.cursor()
+            cursor.execute('''UPDATE note SET title_note=? WHERE note_number=? AND user_number=?''',(title_note,note_number,user_number))
+            return cursor.rowcount
     
 
-    def get_note(self,note_number):
+    def get_note(self,note_number,user_number):
         with sqlite3.connect("database.db") as connection:
             cursor = connection.cursor()
-            cursor.execute('''SELECT  title_note FROM note WHERE note_number=?''',(note_number,))
+            cursor.execute('''SELECT  title_note FROM note WHERE note_number=? AND user_number=? ''',(note_number,user_number))
             return cursor.fetchone()
