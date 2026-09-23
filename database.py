@@ -1,5 +1,5 @@
 import sqlite3
-
+import os
 class Database():
     def __init__(self):
         self.create_table()
@@ -8,18 +8,21 @@ class Database():
         with sqlite3.connect("database.db") as connection:
             cursor=connection.cursor()
             cursor.execute('''CREATE TABLE IF NOT EXISTS users 
-            (user_names TEXT UNIQUE NOT NULL,password_users TEXT NOT NULL ,user_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, token_users TEXT UNIQUE NOT NULL)''')
+            (user_names TEXT UNIQUE NOT NULL,password_users TEXT NOT NULL ,user_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, token_users TEXT UNIQUE )''')
          
             cursor.execute('''CREATE TABLE IF NOT EXISTS note
             (note_number INTEGER PRIMARY KEY AUTOINCREMENT,notes TEXT NOT NULL ,title_note TEXT NOT NULL ,create_at NOT NULL ,user_number INTEGER ,FOREIGN KEY(user_number)  REFERENCES users(user_number))''')
 
-
+    
     def get_user_number(self,token_user):
         with sqlite3.connect('database.db') as connection:
             cursor=connection.cursor()
             cursor.execute('''SELECT user_number FROM users WHERE token_users=?''',(token_user,))
-            return cursor.fetchone()
-
+            print(repr(f'token user {token_user}'))
+            result=cursor.fetchone()
+            print(f"result{result}")
+            return result
+       
 
 
     def register(self,user_names,password_users):
@@ -34,6 +37,7 @@ class Database():
             cursor.execute('''UPDATE  users SET token_users=?  WHERE user_names=?''',(token_user,user_names))
             cursor.execute('''SELECT token_users FROM users WHERE user_names=?''',(user_names,))
             return cursor.fetchone()
+           
 
 
 
@@ -46,9 +50,10 @@ class Database():
     def get_users(self):
         with sqlite3.connect("database.db") as connection:
             cursor=connection.cursor()
-            cursor.execute('''SELECT user_names,password_users FROM users''')
-            return cursor.fetchall()
-
+            cursor.execute('''SELECT user_names,password_users,token_users FROM users''')
+            result=cursor.fetchall()
+            print(repr(result))
+            return result
     def insert_note(self,notes,title_note,user_number):
         with sqlite3.connect("database.db") as connection:
             cursor=connection.cursor()

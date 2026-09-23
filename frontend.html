@@ -1,0 +1,80 @@
+<title>test</title>
+<body>
+  <div id="login_section">
+    <input id="user_name" />
+    <input id="user_password" />
+    <button id="login">log in</button>
+  </div>
+  <div id="notes_section">
+    <button id="delete_note">delete</button>
+    <button id="insert_note">insert_note</button>
+    <button id="change_title">change_title</button>
+    <button id="get_note">get_note</button>
+  </div>
+  <form id="form_delete" hidden>
+    <input
+      id="delete"
+      type="number"
+      placeholder="please intere a note number"
+    />
+    <button id="delete_b" type="button">delete</button>
+  </form>
+
+  <script>
+    let token;
+    const login_section = document.getElementById("login_section");
+    const notes_section = document.getElementById("notes_section");
+    const button_delete = document.getElementById("delete_note");
+    const button_insert = document.getElementById("insert_note");
+    const button_login = document.getElementById("login");
+    const form_delete = document.getElementById("form_delete")
+    const delete_b = document.getElementById('delete_b');
+    let note_number_d = document.getElementById("delete");
+    notes_section.hidden = true;
+    button_login.addEventListener("click", function () {
+      let user = {
+        user_name: document.getElementById("user_name").value,
+        user_password: document.getElementById("user_password").value
+      };
+      let data = JSON.stringify(user);
+      fetch("/login", {
+        method: "POST",
+        body: data,
+        headers: { "Content-Type": "application/json" },
+      })
+        .then(function (response) {console.log(response.status,response.ok)
+          if (response.ok) {
+            login_section.hidden = true;
+            notes_section.hidden = false;
+            return response.text();
+          } else {
+            throw new Error("login failed");
+          }
+        })
+        .then(function (token_login) {console.log(token_login);token=token_login;
+          fetch("/test", {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          })
+            .then(function (response) {
+              return response.text();
+            })
+            .then(console.log);
+        })
+        .catch(function (error) {
+          console.log(error.message);
+        });
+    });
+
+    button_delete.addEventListener("click", function () { form_delete.hidden=false;
+        console.log(token);
+        delete_b.addEventListener("click",function(){fetch(`/delete_note?note_number=${note_number_d.value}`, {
+        method: "DELETE",headers:{Authorization:`Bearer ${token}`}
+      })
+        .then(function (response) {console.log(response.status)
+          return response.text();
+        })
+        .then(console.log);})
+    });
+  </script>
+</body>
