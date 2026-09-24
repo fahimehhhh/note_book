@@ -13,6 +13,7 @@ app = FastAPI()
 class Note(BaseModel):
     title:str
     note:str
+    priority:str
 
 class Change_note(BaseModel):
     title:str
@@ -23,12 +24,6 @@ class User(BaseModel):
 
 httpbearer =HTTPBearer()
 
-@app.get('/oo')
-def get_user():
-    db=Database()
-    result = db.get_users()
-    print(result)
-    return result
 
 def get_current_user(token:HTTPAuthorizationCredentials = Depends(httpbearer) ):
     token =token.credentials.strip('""')
@@ -40,9 +35,14 @@ def get_current_user(token:HTTPAuthorizationCredentials = Depends(httpbearer) ):
     else:
         user_number=user_number[0]
         return user_number
+    
 @app.get('/')
 def get():
     return FileResponse('frontend.html')
+
+@app.get('/style.css')
+def style():
+    return FileResponse('style.css')
 
 @app.get('/test')
 def test(authorization:HTTPAuthorizationCredentials= Depends(httpbearer)):
@@ -57,8 +57,8 @@ def register(user:User):
     elif user_name.__len__() >20:
         raise(HTTPException(422,'unprocessable content'))
     if  db.check_username(user_name,user.user_password) is None:
-        user_number=db.register(user_name,user.user_password)
-        return (f'user registed and user_number is {user_number}')
+        db.register(user_name,user.user_password)
+        return (f'user registed and user_name is {user_name}')
     else:
         raise(HTTPException(409,'conflict'))
 
@@ -75,8 +75,8 @@ def login(user:User):
         
     else:
         raise(HTTPException(400,'bad request'))
-    
-@app.post("/new note")
+     
+@app.post("/new_note")
 def new_note (note:Note,user_number:int=Depends(get_current_user)):
     db=Database()
     title =note.title.strip(' ')
@@ -85,8 +85,9 @@ def new_note (note:Note,user_number:int=Depends(get_current_user)):
     count =title.__len__()
     if count > 20 :
         raise HTTPException(400,'bad request')
-    db.insert_note(note,title,user_number)
-    return (f"A Not Title {title.capitalize()} Was Added with number {user_number}")
+    note_number=db.insert_note(note.note,title,note.priority,user_number)
+    print(note_number)
+    return (f"A Not Title {title.capitalize()} Was Added with number {note_number}")
 
 
 @app.delete("/delete_note")
@@ -99,14 +100,13 @@ def delete_note(note_number:int,user_number:int= Depends(get_current_user)):
         raise (HTTPException(400,'bad_request'))
 
 
-@app.get("/my notes")
+@app.get("/my_notes")
 def get_notes(user_number:int=Depends(get_current_user)):
     db=Database()
     title_note =db.get_notes(user_number)
     if title_note ==[]:
         raise(HTTPException(400,'bad request'))
-    return ('sucssesfully')
-
+    return title_note
 @app.put("/change_note")
 def change_note(note:Change_note,note_number:int,user_number:int=Depends(get_current_user)):
     title_note=note.title
@@ -122,4 +122,6 @@ def search_note(note_number:int,user_number:int=Depends(get_current_user)):
     title_note=db.get_note(note_number,user_number)
     if title_note ==():
         raise(HTTPException(404,'not found'))
-    return title_note
+    title=title_note[0]
+    note=title_note[1]
+    return (f'title:{title},note:{note}')
