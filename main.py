@@ -5,15 +5,18 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer,HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from database import Database
+from pwdlib import PasswordHash
+from typing import Literal
 import secrets
 
 
+password_hash=PasswordHash.recommended()
 app = FastAPI()
 
 class Note(BaseModel):
     title:str
     note:str
-    priority:str
+    priority:Literal['low', 'medium','high']
 
 class Change_note(BaseModel):
     title:str
@@ -51,42 +54,45 @@ def test(authorization:HTTPAuthorizationCredentials= Depends(httpbearer)):
 @app.post("/register")
 def register(user:User):
     db=Database()
+    password_hashing=password_hash.hash(user.user_password)
     user_name = user.user_name.strip()
     if user_name =='':
         raise(HTTPException(422,'unprocessable content'))
     elif user_name.__len__() >20:
         raise(HTTPException(422,'unprocessable content'))
-    if  db.check_username(user_name,user.user_password) is None:
-        db.register(user_name,user.user_password)
+    if  db.check_username(user_name) is None:
+        db.register(user_name,password_hashing)
         return (f'user registed and user_name is {user_name}')
     else:
         raise(HTTPException(409,'conflict'))
 
 @app.post("/login")
 def login(user:User):
+    password=user.user_password
     token_user =secrets.token_urlsafe()
     user_name =user.user_name
-    user_password =user.user_password
     db=Database()
-    result =db.check_username(user_name,user_password)
+    result =db.check_username(user_name)
     if result != None:
-       token =db.login(token_user,user_name)
-       return token[0]
-        
+       password_stored=db.check_password(user_name)
+       password_stored=password_stored[0]
+       if password_hash.verify(password,password_stored):
+            token =db.login(token_user,user_name)
+            return token[0]
+       else:
+            raise(HTTPException(409,'conflict'))
     else:
-        raise(HTTPException(400,'bad request'))
-     
+        raise(HTTPException(400,'badRequest'))
 @app.post("/new_note")
 def new_note (note:Note,user_number:int=Depends(get_current_user)):
     db=Database()
     title =note.title.strip(' ')
     if title =='':
-        raise HTTPException(400,'Bad Request')
+        raise HTTPException(422,'unprocessable content')
     count =title.__len__()
     if count > 20 :
-        raise HTTPException(400,'bad request')
+        raise HTTPException(422,'unprocessable content')
     note_number=db.insert_note(note.note,title,note.priority,user_number)
-    print(note_number)
     return (f"A Not Title {title.capitalize()} Was Added with number {note_number}")
 
 
@@ -120,8 +126,11 @@ def change_note(note:Change_note,note_number:int,user_number:int=Depends(get_cur
 def search_note(note_number:int,user_number:int=Depends(get_current_user)):
     db=Database()
     title_note=db.get_note(note_number,user_number)
-    if title_note ==():
+    print(title_note)
+    if title_note is None:
         raise(HTTPException(404,'not found'))
-    title=title_note[0]
-    note=title_note[1]
-    return (f'title:{title},note:{note}')
+
+    else:
+        title=title_note[0]
+        note=title_note[1]
+        return (f'title:{title},note:{note}')

@@ -4,27 +4,37 @@
 </head>
 
 <body>
-  <div id="login_section" >
+  <div id="login_section">
     <div id="login_form">
-    <input id="user_name" placeholder="please enter your name" />
-    <input id="user_password" placeholder="please enter your password" />
-    <button id="login">log in</button>
-    <button id="register">register</button>
+      <input id="user_name" placeholder="please enter your name" />
+      <input id="user_password" placeholder="please enter your password" />
+      <button id="login">log in</button>
+      <button id="register">register</button>
+      <p id="login_error"></p>
     </div>
   </div>
   <div id="notes_section">
     <div id="notes_form">
-    <button id="delete_note">delete</button>
-    <button id="insert_note">insert_note</button>
-    <button id="change_title">change_title</button>
-    <button id="get_note">get_note</button>
-    <button id="get_notes">get_notes</button>
+      <button id="delete_note">delete</button>
+      <button id="insert_note">insert_note</button>
+      <button id="change_title">change_title</button>
+      <button id="get_note">get_note</button>
+      <button id="get_notes">get_notes</button>
     </div>
   </div>
   <form id="form_register" hidden>
-    <input id="user_name_register" type="text" placeholder="please enter your name"/>
-    <input id="user_password_register" type="text" placeholder="please enter your password" />
+    <input
+      id="user_name_register"
+      type="text"
+      placeholder="please enter your name"
+    />
+    <input
+      id="user_password_register"
+      type="text"
+      placeholder="please enter your password"
+    />
     <button id="register_b" type="button">register</button>
+    <p id="register_error"></p>
   </form>
   <form id="form_delete" hidden>
     <input
@@ -33,6 +43,7 @@
       placeholder="please entere a note number"
     />
     <button id="delete_b" type="button">delete</button>
+    <p id="delete_error"></p>
   </form>
   <form id="form_insert" hidden>
     <input
@@ -47,6 +58,7 @@
       placeholder="pleade enter a priority of not"
     />
     <button id="insert_b" type="button">insert</button>
+    <p id="insert_error"></p>
   </form>
   <form id="form_change" hidden>
     <input
@@ -56,6 +68,7 @@
     />
     <input id="title" type="text" placeholder="please enter a title_note" />
     <button id="change_b" type="button">change</button>
+    <p id="change_error"></p>
   </form>
   <form id="form_get_note" hidden>
     <input
@@ -64,9 +77,11 @@
       placeholder="please enter a number"
     />
     <button id="get_one_note_b" type="button">get_one</button>
+    <p id="getnote_error"></p>
   </form>
   <form id="form_get_notes" hidden>
     <button id="get_notes_b" type="button">get_notes</button>
+    <p id="getnotes_error"></p>
   </form>
   <script>
     let token;
@@ -79,8 +94,8 @@
     const button_get_notes = document.getElementById("get_notes");
     const button_login = document.getElementById("login");
     const button_register = document.getElementById("register");
-    const form_register =document.getElementById("form_register") 
-    const register_b =document.getElementById("register_b") 
+    const form_register = document.getElementById("form_register");
+    const register_b = document.getElementById("register_b");
     const form_delete = document.getElementById("form_delete");
     const delete_b = document.getElementById("delete_b");
     const form_insert = document.getElementById("form_insert");
@@ -97,8 +112,17 @@
     let title_note = document.getElementById("title_note");
     let note = document.getElementById("note");
     let priority = document.getElementById("priority");
-    let user_name_register = document.getElementById("user_name_register")
-    let user_password_register = document.getElementById("user_password_register")
+    let login_error = document.getElementById("login_error");
+    let register_error = document.getElementById("register_error");
+    let delete_error = document.getElementById("delete_error");
+    let insert_error = document.getElementById("insert_error");
+    let change_error = document.getElementById("change_error");
+    let getnote_error = document.getElementById("getnote_error");
+    let getnotes_error = document.getElementById("getnotes_error");
+    let user_name_register = document.getElementById("user_name_register");
+    let user_password_register = document.getElementById(
+      "user_password_register",
+    );
     let note_number_d = document.getElementById("delete");
 
     notes_section.hidden = true;
@@ -114,124 +138,185 @@
         headers: { "Content-Type": "application/json" },
       })
         .then(function (response) {
-          console.log(response.status, response.ok);
-          if (response.ok) {
-            login_section.hidden = true;
+          response = handleResponse(response, "login");
+          if (response) {
             notes_section.hidden = false;
+            login_section.hidden = true;
             return response.text();
-          } else {
-            throw new Error("login failed");
           }
         })
         .then(function (token_login) {
-          console.log(token_login);
           token = token_login;
-          fetch("/test", {
-            method: "GET",
-            headers: { Authorization: `Bearer ${token}` },
-          })
-            .then(function (response) {
-              return response.text();
-            })
-            .then(console.log);
         })
         .catch(function (error) {
-          console.log(error.message);
+          login_error.textContent = getErrormessage(error);
+          console.log(getErrormessage);
         });
     });
     button_register.addEventListener("click", function () {
-      login_section.hidden=true;
+      login_section.hidden = true;
       form_register.hidden = false;
-      register_b.addEventListener('click',function(){data=JSON.stringify({user_name:user_name_register.value,user_password:user_password_register.value});
-      fetch('/register',{method:"POST",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},
-      body:data}).then(function(response){return response.text()}).then(console.log);login_section.hidden=false;form_register.hidden=true})
+    });
+
+    register_b.addEventListener("click", function () {
+      data = JSON.stringify({
+        user_name: user_name_register.value,
+        user_password: user_password_register.value,
+      });
+      fetch("/register", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: data,
+      })
+        .then(function (response) {
+          response = handleResponse(response, "register");
+          if (response) {
+            notes_section.hidden = false;
+            login_section.hidden = true;
+          }
+          return response.text();
+        })
+
+        .then(console.log)
+        .catch(function (error) {
+          register_error.textContent = getErrormessage(error);
+        });
     });
 
     button_delete.addEventListener("click", function () {
-      notes_section.hidden;
+      notes_section.hidden=true;
       form_delete.hidden = false;
-      delete_b.addEventListener("click", function () {
-        fetch(`/delete_note?note_number=${note_number_d.value}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
+    });
+    delete_b.addEventListener("click", function () {
+      fetch(`/delete_note?note_number=${note_number_d.value}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(function (response) {
+          response = handleResponse(response, "delete_note");
+          console.log(response.status);
+          return response.text();
         })
-          .then(function (response) {
-            console.log(response.status);
-            return response.text();
-          })
-          .then(console.log);
-      });
+        .then(console.log)
+        .catch(function (error) {
+          delete_error.textContent = getErrormessage(error);
+        });
     });
     button_insert.addEventListener("click", function () {
-      notes_section.hidden;
+      notes_section.hidden=true;
       form_delete.hidden;
       form_insert.hidden = false;
-      insert_b.addEventListener("click", function () {
-        data = JSON.stringify({
-          note: note.value,
-          title: title_note.value,
-          priority: priority.value,
-        });
-        fetch(`/new_note`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: data,
-        })
-          .then(function (response) {
-            return response.text();
-          })
-          .then(console.log);
+    });
+    insert_b.addEventListener("click", function () {
+      data = JSON.stringify({
+        note: note.value,
+        title: title_note.value,
+        priority: priority.value,
       });
+      fetch(`/new_note`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: data,
+      })
+        .then(function (response) {
+          response = handleResponse(response, "new_note");
+          return response.text();
+        })
+        .then(console.log)
+        .catch(function (error) {
+          insert_error.textContent = getErrormessage(error);
+        });
     });
     button_change_title.addEventListener("click", function () {
-      notes_section.hidden;
+      notes_section.hidden=true;
       form_change.hidden = false;
-      change_b.addEventListener("click", function () {
-        data = JSON.stringify({ title: title.value });
-        fetch(`/change_note?note_number=${note_number.value}`, {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: data,
+    });
+    change_b.addEventListener("click", function () {
+      data = JSON.stringify({ title: title.value });
+      fetch(`/change_note?note_number=${note_number.value}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: data,
+      })
+        .then(function (response) {
+          response = handleResponse(response, "change_note");
+          return response.text();
         })
-          .then(function (response) {
-            return response.text();
-          })
-          .then(console.log);
-      });
+        .then(console.log)
+        .catch(function (error) {
+          change_error.textContent = getErrormessage(error);
+        });
     });
     button_get_note.addEventListener("click", function () {
-      notes_section.hidden;
+      notes_section.hidden=true;
       form_get_note.hidden = false;
-      get_one_note_b.addEventListener("click", function () {
-        fetch(`/search_note?note_number=${note_number_get.value}`, {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
+    });
+    get_one_note_b.addEventListener("click", function () {
+      fetch(`/search_note?note_number=${note_number_get.value}`, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(function (response) {
+          return response.text();
         })
-          .then(function (response) {
-            return response.text();
-          })
-          .then(console.log);
-      });
+        .then(console.log);
     });
     button_get_notes.addEventListener("click", function () {
-      notes_section.hidden;
+      notes_section.hidden=true;
       form_get_notes.hidden = false;
-      get_notes_b.addEventListener("click", function () {
-        fetch("/my_notes", {
-          method: "GET",
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then(function (response) {
-            return response.text();
-          })
-          .then(console.log);
-      });
     });
+    get_notes_b.addEventListener("click", function () {
+      fetch("/my_notes", {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then(function (response) {
+          return response.text();
+        })
+        .then(console.log);
+    });
+
+    function handleResponse(response, operation) {
+      if (response.ok) {
+        return response;
+      } else {
+        const error = new Error();
+        ((error.status = response.status), (error.operation = operation));
+        throw error;
+      }
+    }
+
+    function getErrormessage(error) {
+      if (error.status == 400 && error.operation == "login") {
+        return "Username or password is incorrect";
+      }
+      if (error.status == 409 && error.operation == "login") {
+        return "this username is conflict";
+      }
+      if (error.status == 422 && error.operation == "register") {
+        return "Username or password is not valid";
+      }
+      if (error.status == 409 && error.operation == "register") {
+        return "This username already exists";
+      }
+      if (error.status == 400 && error.operation == "delete_note") {
+        return "This note does not exist";
+      }
+      if (error.status == 422 && error.operation == "new_note") {
+        return "Invalid note data";
+      }
+      if (error.status == 400 && error.operation == "change_note") {
+        return "This note does not exist";
+      }
+    }
   </script>
 </body>

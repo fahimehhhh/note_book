@@ -8,7 +8,7 @@ class Database():
         with sqlite3.connect("database.db") as connection:
             cursor=connection.cursor()
             cursor.execute('''CREATE TABLE IF NOT EXISTS users 
-            (user_names TEXT UNIQUE NOT NULL,password_users TEXT NOT NULL ,user_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, token_users TEXT UNIQUE )''')
+            (user_names TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL ,user_number INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, token_users TEXT UNIQUE )''')
          
             cursor.execute('''CREATE TABLE IF NOT EXISTS note
             (note_number INTEGER PRIMARY KEY AUTOINCREMENT,notes TEXT NOT NULL ,title_note TEXT NOT NULL ,create_at INTEGER NOT NULL ,user_number INTEGER ,priority TEXT NOT NULL DEFAULT 'low',FOREIGN KEY(user_number)  REFERENCES users(user_number) )''')
@@ -19,10 +19,10 @@ class Database():
             cursor.execute('''SELECT user_number FROM users WHERE token_users=?''',(token_user,))
             return cursor.fetchone()
    
-    def register(self,user_names,password_users):
+    def register(self,user_names,password_hash):
         with sqlite3.connect("database.db") as connection:
             cursor =connection.cursor()
-            cursor.execute('''INSERT INTO users (user_names,password_users) VALUES(?,?)''',(user_names,password_users))
+            cursor.execute('''INSERT INTO users (user_names,password_hash) VALUES(?,?)''',(user_names,password_hash))
             return 
 
     def login(self,token_user ,user_names):
@@ -32,11 +32,18 @@ class Database():
             cursor.execute('''SELECT token_users FROM users WHERE user_names=?''',(user_names,))
             return cursor.fetchone()
 
-    def check_username(self,user_name,password_user):
+    def check_username(self,user_name):
         with sqlite3.connect("database.db") as connection:
             cursor=connection.cursor()
-            cursor.execute('''SELECT user_names,password_users FROM users WHERE (user_names,password_users)=(?,?)''',(user_name,password_user))
+            cursor.execute('''SELECT user_names FROM users WHERE user_names=?''',(user_name,))
             return cursor.fetchone()
+
+    def check_password(self,user_name):
+        with sqlite3.connect('database.db') as connection:
+            cursor=connection.cursor()
+            cursor.execute('''SELECT password_hash FROM users WHERE user_names=?''',(user_name,))
+            return cursor.fetchone()
+
 
     def insert_note(self,notes,title_note,priority,user_number):
         with sqlite3.connect("database.db") as connection:
