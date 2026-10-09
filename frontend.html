@@ -44,6 +44,7 @@
     />
     <button id="delete_b" type="button">delete</button>
     <p id="delete_error"></p>
+    <p id="delete_success"></p>
   </form>
   <form id="form_insert" hidden>
     <input
@@ -59,6 +60,7 @@
     />
     <button id="insert_b" type="button">insert</button>
     <p id="insert_error"></p>
+    <p id="insert_success"></p>
   </form>
   <form id="form_change" hidden>
     <input
@@ -69,6 +71,7 @@
     <input id="title" type="text" placeholder="please enter a title_note" />
     <button id="change_b" type="button">change</button>
     <p id="change_error"></p>
+    <p id="change_success"></p>
   </form>
   <form id="form_get_note" hidden>
     <input
@@ -78,10 +81,12 @@
     />
     <button id="get_one_note_b" type="button">get_one</button>
     <p id="getnote_error"></p>
+    <p id="getnote_success"></p>
   </form>
   <form id="form_get_notes" hidden>
     <button id="get_notes_b" type="button">get_notes</button>
     <p id="getnotes_error"></p>
+    <p id="getnotes_success"></p>
   </form>
   <form id="backto_menu" hidden>
     <button id="back_menu_b" type="button">BackTo_Menu</button>
@@ -111,6 +116,11 @@
     const get_notes_b = document.getElementById("get_notes_b");
     const form_backto_menu = document.getElementById("backto_menu");
     const back_menu_b = document.getElementById("back_menu_b");
+    const delete_success = document.getElementById("delete_success");
+    const insert_success = document.getElementById("insert_success");
+    const change_success = document.getElementById("change_success");
+    const getnote_success = document.getElementById("getnote_success");
+    const getnotes_success = document.getElementById("getnotes_success");
     let note_number_get = document.getElementById("note_number_get");
     let note_number = document.getElementById("note_number");
     let title = document.getElementById("title");
@@ -205,10 +215,12 @@
         .then(function (response) {
           response = handleResponse(response, "delete_note");
           console.log(response.status);
-          return response.text();
+          delete_error.textContent = "";
+          delete_success.textContent = "deleting successfully";
         })
         .then(console.log)
         .catch(function (error) {
+          delete_success.textContent = "";
           delete_error.textContent = getErrormessage(error);
         });
     });
@@ -234,10 +246,13 @@
       })
         .then(function (response) {
           response = handleResponse(response, "new_note");
+          insert_error.textContent = "";
+          insert_success.textContent = "inserting is successfully";
           return response.text();
         })
         .then(console.log)
         .catch(function (error) {
+          insert_success.textContent = "";
           insert_error.textContent = getErrormessage(error);
         });
     });
@@ -258,17 +273,19 @@
       })
         .then(function (response) {
           response = handleResponse(response, "change_note");
-          return response.text();
+          change_error.textContent = "";
+          change_success.textContent = "changing is successfully";
         })
         .then(console.log)
         .catch(function (error) {
+          change_success.textContent = "";
           change_error.textContent = getErrormessage(error);
         });
     });
     button_get_note.addEventListener("click", function () {
       notes_section.hidden = true;
       form_get_note.hidden = false;
-      form_backto_menu.hidden = false
+      form_backto_menu.hidden = false;
     });
     get_one_note_b.addEventListener("click", function () {
       fetch(`/search_note?note_number=${note_number_get.value}`, {
@@ -276,14 +293,20 @@
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(function (response) {
-          return response.text();
+          response = handleResponse(response, "search_note");
+          getnote_error.textContent = "";
+          getnote_success.textContent = "geting is successfully";
         })
-        .then(console.log);
+        .then(console.log)
+        .catch(function (error) {
+          getnote_success.textContent = "";
+          getnote_error.textContent = getErrormessage(error);
+        });
     });
     button_get_notes.addEventListener("click", function () {
       notes_section.hidden = true;
       form_get_notes.hidden = false;
-      form_backto_menu.hidden=false
+      form_backto_menu.hidden = false;
     });
     get_notes_b.addEventListener("click", function () {
       fetch("/my_notes", {
@@ -291,9 +314,26 @@
         headers: { Authorization: `Bearer ${token}` },
       })
         .then(function (response) {
+          response = handleResponse(response, "my_notes");
+          getnotes_error.textContent = "";
+          getnotes_success.textContent = "get notes is successfully";
           return response.text();
         })
-        .then(console.log);
+        .then(console.log)
+        .catch(function (error) {
+          getnotes_success.textContent = "";
+          getnotes_error.textContent = getErrormessage(error);
+        });
+    });
+
+    back_menu_b.addEventListener("click", function () {
+      form_delete.hidden = true;
+      notes_section.hidden = false;
+      form_backto_menu.hidden = true;
+      form_insert.hidden = true;
+      form_change.hidden = true;
+      form_get_note.hidden = true;
+      form_get_notes.hidden = true;
     });
 
     function handleResponse(response, operation) {
@@ -305,16 +345,6 @@
         throw error;
       }
     }
-
-    back_menu_b.addEventListener("click", function () {
-      form_delete.hidden = true;
-      notes_section.hidden = false;
-      form_backto_menu.hidden = true;
-      form_insert.hidden = true;
-      form_change.hidden = true;
-      form_get_note.hidden=true
-      form_get_notes.hidden=true
-    });
 
     function getErrormessage(error) {
       if (error.status == 400 && error.operation == "login") {
@@ -337,6 +367,13 @@
       }
       if (error.status == 400 && error.operation == "change_note") {
         return "This note does not exist";
+      }
+      if (error.status == 404 && error.operation == "my_notes") {
+        return "notes is not find";
+      }
+
+      if (error.status == 404 && error.operation == "search_note") {
+        return "note is not find";
       }
     }
   </script>
