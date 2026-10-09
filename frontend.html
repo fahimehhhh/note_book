@@ -83,6 +83,9 @@
     <button id="get_notes_b" type="button">get_notes</button>
     <p id="getnotes_error"></p>
   </form>
+  <form id="backto_menu" hidden>
+    <button id="back_menu_b" type="button">BackTo_Menu</button>
+  </form>
   <script>
     let token;
     const login_section = document.getElementById("login_section");
@@ -106,6 +109,8 @@
     const get_one_note_b = document.getElementById("get_one_note_b");
     const form_get_notes = document.getElementById("form_get_notes");
     const get_notes_b = document.getElementById("get_notes_b");
+    const form_backto_menu = document.getElementById("backto_menu");
+    const back_menu_b = document.getElementById("back_menu_b");
     let note_number_get = document.getElementById("note_number_get");
     let note_number = document.getElementById("note_number");
     let title = document.getElementById("title");
@@ -174,8 +179,9 @@
         .then(function (response) {
           response = handleResponse(response, "register");
           if (response) {
-            notes_section.hidden = false;
-            login_section.hidden = true;
+            notes_section.hidden = true;
+            login_section.hidden = false;
+            form_register.hidden = true;
           }
           return response.text();
         })
@@ -187,8 +193,9 @@
     });
 
     button_delete.addEventListener("click", function () {
-      notes_section.hidden=true;
+      notes_section.hidden = true;
       form_delete.hidden = false;
+      form_backto_menu.hidden = false;
     });
     delete_b.addEventListener("click", function () {
       fetch(`/delete_note?note_number=${note_number_d.value}`, {
@@ -206,9 +213,10 @@
         });
     });
     button_insert.addEventListener("click", function () {
-      notes_section.hidden=true;
+      notes_section.hidden = true;
       form_delete.hidden;
       form_insert.hidden = false;
+      form_backto_menu.hidden = false;
     });
     insert_b.addEventListener("click", function () {
       data = JSON.stringify({
@@ -234,8 +242,9 @@
         });
     });
     button_change_title.addEventListener("click", function () {
-      notes_section.hidden=true;
+      notes_section.hidden = true;
       form_change.hidden = false;
+      form_backto_menu.hidden = false;
     });
     change_b.addEventListener("click", function () {
       data = JSON.stringify({ title: title.value });
@@ -257,8 +266,9 @@
         });
     });
     button_get_note.addEventListener("click", function () {
-      notes_section.hidden=true;
+      notes_section.hidden = true;
       form_get_note.hidden = false;
+      form_backto_menu.hidden = false
     });
     get_one_note_b.addEventListener("click", function () {
       fetch(`/search_note?note_number=${note_number_get.value}`, {
@@ -271,8 +281,9 @@
         .then(console.log);
     });
     button_get_notes.addEventListener("click", function () {
-      notes_section.hidden=true;
+      notes_section.hidden = true;
       form_get_notes.hidden = false;
+      form_backto_menu.hidden=false
     });
     get_notes_b.addEventListener("click", function () {
       fetch("/my_notes", {
@@ -294,6 +305,16 @@
         throw error;
       }
     }
+
+    back_menu_b.addEventListener("click", function () {
+      form_delete.hidden = true;
+      notes_section.hidden = false;
+      form_backto_menu.hidden = true;
+      form_insert.hidden = true;
+      form_change.hidden = true;
+      form_get_note.hidden=true
+      form_get_notes.hidden=true
+    });
 
     function getErrormessage(error) {
       if (error.status == 400 && error.operation == "login") {
